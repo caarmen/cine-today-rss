@@ -27,7 +27,10 @@ Server with endpoint to return an rss of movies showing today in the list of giv
     ```
     docker run --env authorization="..." --env ac_auth_token="..." --detach --publish 8000:8000 ghcr.io/caarmen/cine-today-rss
     ```
-
+☝️ Note, by default, the docker container runs in the UTC timezone. Therefore, it will query the allocine api providing datetimes in utc. This may not be the desired behavior. To make the docker container run in a specific timezone, specify the `TZ` environment variable. For example, to specify a Paris timezone, use `--env TZ=Europe/Paris`:
+```
+docker run --env TZ=Europe/Paris --env authorization="..." --env ac_auth_token="..." --detach --publish 8000:8000 ghcr.io/caarmen/cine-today-rss
+```
 
 ### Query the server
 
