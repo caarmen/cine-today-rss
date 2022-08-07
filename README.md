@@ -21,11 +21,12 @@ Server with endpoint to return an rss of movies showing today in the list of giv
 
 #### Run the server in Docker
 
-* Build the docker image: `docker build -t cinetodayrss .
+* Pull the docker image: `docker pull ghcr.io/caarmen/cine-today-rss:latest`
+  - Alternatively: Build the docker image: `docker build -t cine-today-rss`.
 * Run the server passing in your authorization keys as environment variables:
-```
-docker run --env authorization="..." --env ac_auth_token="..." --detach --publish 8000:8000 cinetodayrss
-```
+    ```
+    docker run --env authorization="..." --env ac_auth_token="..." --detach --publish 8000:8000 ghcr.io/caarmen/cine-today-rss
+    ```
 
 
 ### Query the server
