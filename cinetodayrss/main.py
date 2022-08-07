@@ -6,7 +6,11 @@ from fastapi import FastAPI
 import uvicorn
 from cinetodayrss.routers import movieshowtimes
 
-app = FastAPI()
+app = FastAPI(
+    openapi_url=None,
+    redoc_url=None,
+    docs_url=None,
+)
 app.include_router(movieshowtimes.router)
 
 
