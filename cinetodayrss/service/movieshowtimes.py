@@ -3,7 +3,7 @@ Implementation of the movieshowtimes endpoint
 """
 from dataclasses import dataclass
 from datetime import datetime, date
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Set
 import xml.etree.ElementTree as ET
 
 from gql.client import Client
@@ -56,9 +56,15 @@ query MovieWithShowtimesList($theaterId: String!, $from: DateTime!, $to: DateTim
 )
 
 
-def _to_rss(movies: List[Movie]) -> str:
+def _to_rss(movies: List[Movie], feed_url: str) -> str:
     rss = ET.Element("rss")
+    rss.set("version", "2.0")
+    rss.set("xmlns:atom", "http://www.w3.org/2005/Atom")
     channel = ET.SubElement(rss, "channel")
+    atom_link = ET.SubElement(channel, "atom:link")
+    atom_link.set("href", feed_url)
+    atom_link.set("rel", "self")
+    atom_link.set("type", "application/rss+xml")
     channel_title = ET.SubElement(channel, "title")
     channel_title.text = "Films dans vos cinémas aujourd'hui"
     channel_link = ET.SubElement(channel, "link")
@@ -72,6 +78,8 @@ def _to_rss(movies: List[Movie]) -> str:
         item_title.text = movie.title
         item_link = ET.SubElement(item, "link")
         item_link.text = movie.url
+        item_guid = ET.SubElement(item, "guid")
+        item_guid.text = movie.url
     ET.indent(rss, space="    ")
     return ET.tostring(rss, xml_declaration=True, encoding="utf-8")
 
@@ -83,9 +91,7 @@ def _edge_to_movie(edge: Dict[str, Any]) -> Movie:
 
 def _response_to_movies(response: str) -> List[Movie]:
     edges = response["movieShowtimeList"]["edges"]
-    all_movies = [_edge_to_movie(edge) for edge in edges]
-    unique_movies = list(set(all_movies))
-    return unique_movies
+    return [_edge_to_movie(edge) for edge in edges]
 
 
 async def _get_movies_for_theater(theater_id: str) -> List[Movie]:
@@ -114,16 +120,16 @@ async def _get_movies_for_theater(theater_id: str) -> List[Movie]:
         return _response_to_movies(response)
 
 
-async def get_movies_rss(theater_ids: List[Movie]) -> str:
+async def get_movies_rss(theater_ids: List[Movie], feed_url: str) -> str:
     """
     Get the rss feed for the movies
     """
-    movies: List[Movie] = []
+    movies: Set[Movie] = set()
     for theater_id in theater_ids:
         movies_for_theater = await _get_movies_for_theater(theater_id=theater_id)
-        movies.extend(movies_for_theater)
+        movies.update(movies_for_theater)
 
     sorted_movies = sorted(movies, key=lambda movie: movie.title)
 
-    rss = _to_rss(sorted_movies)
+    rss = _to_rss(sorted_movies, feed_url=feed_url)
     return rss
