@@ -3,10 +3,11 @@ Router to list movies with their showtimes
 """
 from typing import List
 from fastapi import APIRouter, Query, Request, Response
-from cinetodayrss.service.movieshowtimes import get_movies_rss
+from cinetodayrss.service.movieshowtimes import get_movies_rss, schedule_purge_cache
 
 
 router = APIRouter()
+schedule_purge_cache()
 
 
 @router.get(

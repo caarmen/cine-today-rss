@@ -2,7 +2,9 @@
 Implementation of the movieshowtimes endpoint
 """
 from dataclasses import dataclass
-from datetime import datetime, date
+from datetime import datetime, date, timedelta
+from email.utils import formatdate
+from threading import Timer
 from typing import Any, Dict, List, Set
 import xml.etree.ElementTree as ET
 
@@ -11,6 +13,9 @@ from gql.transport.aiohttp import AIOHTTPTransport
 import gql
 
 from cinetodayrss.settings import settings
+
+_cache = {}
+CACHE_CLEAR_INTERVAL_S = 24 * 60 * 60
 
 
 @dataclass(eq=True, frozen=True)
@@ -80,6 +85,8 @@ def _to_rss(movies: List[Movie], feed_url: str) -> str:
         item_link.text = movie.url
         item_guid = ET.SubElement(item, "guid")
         item_guid.text = movie.url
+        item_pub_date = ET.SubElement(item, "pubDate")
+        item_pub_date.text = _get_date(movie.id)
     ET.indent(rss, space="    ")
     return ET.tostring(rss, xml_declaration=True, encoding="utf-8")
 
@@ -133,3 +140,30 @@ async def get_movies_rss(theater_ids: List[Movie], feed_url: str) -> str:
 
     rss = _to_rss(sorted_movies, feed_url=feed_url)
     return rss
+
+
+def _get_date(movie_id: int) -> str:
+    movie_date = _cache.get(movie_id)
+    if not movie_date:
+        movie_date = datetime.now()
+        _cache[movie_id] = movie_date
+    return formatdate(movie_date.timestamp())
+
+
+def _purge_cache():
+    date_limit = datetime.now() - timedelta(days=90)
+    old_movie_ids = [
+        movie_id for (movie_id, date) in _cache.items() if date < date_limit
+    ]
+    for old_movie_id in old_movie_ids:
+        _cache.pop(old_movie_id, None)
+
+
+def schedule_purge_cache():
+    """
+    Periodically delete old movies from the cache
+    """
+    _purge_cache()
+    timer = Timer(CACHE_CLEAR_INTERVAL_S, schedule_purge_cache)
+    timer.daemon = True
+    timer.start()
