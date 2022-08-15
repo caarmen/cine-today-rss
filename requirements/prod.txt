@@ -2,4 +2,5 @@ aiohttp==3.8.1
 fastapi==0.79.0
 gql==3.4.0
 pydantic==1.9.1
+pytz==2022.2.1
 uvicorn[standard]==0.18.2
