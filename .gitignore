@@ -1,4 +1,6 @@
 .vscode/
 .idea/
+.coverage
+reports/
 __pycache__/
 prod.env

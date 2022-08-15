@@ -9,6 +9,7 @@ from threading import Timer
 from typing import Any, Dict, List, Set
 
 import gql
+import pytz
 from gql.client import Client
 from gql.transport.aiohttp import AIOHTTPTransport
 
@@ -16,6 +17,8 @@ from cinetodayrss.settings import settings
 
 _cache = {}
 CACHE_CLEAR_INTERVAL_S = 24 * 60 * 60
+ALLOCINE_GRAPHQL_URL = "https://graph.allocine.fr/v1/mobile"
+ALLOCINE_FILM_URL_TEMPLATE = "https://www.allocine.fr/film/fichefilm_gen_cfilm={}.html"
 
 
 @dataclass(eq=True, frozen=True)
@@ -33,10 +36,9 @@ class Movie:
         """
         The url of the movie
         """
-        return f"https://www.allocine.fr/film/fichefilm_gen_cfilm={self.id}.html"
+        return ALLOCINE_FILM_URL_TEMPLATE.format(self.id)
 
 
-ALLOCINE_URL = "https://graph.allocine.fr/v1/mobile"
 _query = gql.gql(
     """
 query MovieWithShowtimesList($theaterId: String!, $from: DateTime!, $to: DateTime!) {
@@ -113,7 +115,7 @@ async def _get_movies_for_theater(theater_id: str) -> List[Movie]:
     }
     async with Client(
         transport=AIOHTTPTransport(
-            url=ALLOCINE_URL,
+            url=ALLOCINE_GRAPHQL_URL,
             headers={
                 "Authorization": f"Bearer {settings.authorization}",
                 "AC-Auth-Token": settings.ac_auth_token,
@@ -145,13 +147,13 @@ async def get_movies_rss(theater_ids: List[Movie], feed_url: str) -> str:
 def _get_date(movie_id: int) -> str:
     movie_date = _cache.get(movie_id)
     if not movie_date:
-        movie_date = datetime.now()
+        movie_date = datetime.now(tz=pytz.UTC)
         _cache[movie_id] = movie_date
     return formatdate(movie_date.timestamp())
 
 
 def _purge_cache():
-    date_limit = datetime.now() - timedelta(days=90)
+    date_limit = datetime.now(tz=pytz.UTC) - timedelta(days=90)
     old_movie_ids = [
         movie_id for (movie_id, date) in _cache.items() if date < date_limit
     ]
