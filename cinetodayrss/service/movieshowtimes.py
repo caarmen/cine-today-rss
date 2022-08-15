@@ -1,16 +1,16 @@
 """
 Implementation of the movieshowtimes endpoint
 """
+import xml.etree.ElementTree as ET
 from dataclasses import dataclass
 from datetime import datetime, date, timedelta
 from email.utils import formatdate
 from threading import Timer
 from typing import Any, Dict, List, Set
-import xml.etree.ElementTree as ET
 
+import gql
 from gql.client import Client
 from gql.transport.aiohttp import AIOHTTPTransport
-import gql
 
 from cinetodayrss.settings import settings
 
@@ -96,7 +96,7 @@ def _edge_to_movie(edge: Dict[str, Any]) -> Movie:
     return Movie(id=movie["internalId"], title=movie["title"])
 
 
-def _response_to_movies(response: str) -> List[Movie]:
+def _response_to_movies(response: Dict[str, Any]) -> List[Movie]:
     edges = response["movieShowtimeList"]["edges"]
     return [_edge_to_movie(edge) for edge in edges]
 
