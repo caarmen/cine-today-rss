@@ -16,6 +16,8 @@ from cinetodayrss.settings import settings
 
 _cache = {}
 CACHE_CLEAR_INTERVAL_S = 24 * 60 * 60
+ALLOCINE_GRAPHQL_URL = "https://graph.allocine.fr/v1/mobile"
+ALLOCINE_FILM_URL_TEMPLATE = "https://www.allocine.fr/film/fichefilm_gen_cfilm={}.html"
 
 
 @dataclass(eq=True, frozen=True)
@@ -33,10 +35,9 @@ class Movie:
         """
         The url of the movie
         """
-        return f"https://www.allocine.fr/film/fichefilm_gen_cfilm={self.id}.html"
+        return ALLOCINE_FILM_URL_TEMPLATE.format(self.id)
 
 
-ALLOCINE_URL = "https://graph.allocine.fr/v1/mobile"
 _query = gql.gql(
     """
 query MovieWithShowtimesList($theaterId: String!, $from: DateTime!, $to: DateTime!) {
@@ -113,7 +114,7 @@ async def _get_movies_for_theater(theater_id: str) -> List[Movie]:
     }
     async with Client(
         transport=AIOHTTPTransport(
-            url=ALLOCINE_URL,
+            url=ALLOCINE_GRAPHQL_URL,
             headers={
                 "Authorization": f"Bearer {settings.authorization}",
                 "AC-Auth-Token": settings.ac_auth_token,
