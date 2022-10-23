@@ -12,7 +12,6 @@ class Settings(BaseSettings):
     """
 
     authorization: str = ""
-    ac_auth_token: str = ""
 
 
 settings = Settings(_env_file="prod.env")

@@ -17,7 +17,7 @@ from cinetodayrss.settings import settings
 
 _cache = {}
 CACHE_CLEAR_INTERVAL_S = 24 * 60 * 60
-ALLOCINE_GRAPHQL_URL = "https://graph.allocine.fr/v1/mobile"
+ALLOCINE_GRAPHQL_URL = "https://graph.allocine.fr/v1/public"
 ALLOCINE_FILM_URL_TEMPLATE = "https://www.allocine.fr/film/fichefilm_gen_cfilm={}.html"
 
 
@@ -118,7 +118,6 @@ async def _get_movies_for_theater(theater_id: str) -> List[Movie]:
             url=ALLOCINE_GRAPHQL_URL,
             headers={
                 "Authorization": f"Bearer {settings.authorization}",
-                "AC-Auth-Token": settings.ac_auth_token,
             },
         ),
         fetch_schema_from_transport=True,

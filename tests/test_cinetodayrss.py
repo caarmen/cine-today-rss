@@ -16,7 +16,6 @@ from cinetodayrss.service import movieshowtimes
 from cinetodayrss.service.movieshowtimes import Movie
 from cinetodayrss.settings import settings
 
-settings.ac_auth_token = "some token"
 settings.authorization = "some authorization"
 client = TestClient(app)
 
@@ -50,7 +49,7 @@ def test_rss_feed(graphql_response_factory):
         ]
     ):
         response = client.get(
-            "/moviesrss?theater_ids=VGhlYXRlcjpQMDAwNQ==&theater_ids=VGhlYXRlcjpQMDAzNg=="
+            "/moviesrss?theater_ids=VGhlYXRlcjpDMDE1OQ==&theater_ids=VGhlYXRlcjpQNTc1Ng=="
         )
         assert response.status_code == 200
         rss_doc_root = ET.fromstring(response.content)
@@ -92,7 +91,7 @@ def test_date_cache(graphql_response_factory):
             graphql_response_factory([Movie(id="111", title="Une comédie")]),
         ]
     ):
-        response = client.get("/moviesrss?theater_ids=VGhlYXRlcjpQMDAwNQ==")
+        response = client.get("/moviesrss?theater_ids=VGhlYXRlcjpDMDE1OQ==")
         assert response.status_code == 200
         rss_doc_root = ET.fromstring(response.content)
         items = rss_doc_root.find("channel").findall("item")
@@ -113,7 +112,7 @@ def test_date_cache(graphql_response_factory):
             graphql_response_factory([Movie(id="111", title="Une comédie")]),
         ]
     ):
-        response = client.get("/moviesrss?theater_ids=VGhlYXRlcjpQMDAwNQ==")
+        response = client.get("/moviesrss?theater_ids=VGhlYXRlcjpDMDE1OQ==")
         assert response.status_code == 200
         rss_doc_root = ET.fromstring(response.content)
         items = rss_doc_root.find("channel").findall("item")
@@ -139,7 +138,7 @@ def test_remove_duplicates(graphql_response_factory):
         ]
     ):
         response = client.get(
-            "/moviesrss?theater_ids=VGhlYXRlcjpQMDAwNQ==&theater_ids=VGhlYXRlcjpQMDAzNg=="
+            "/moviesrss?theater_ids=VGhlYXRlcjpDMDE1OQ==&theater_ids=VGhlYXRlcjpQNTc1Ng=="
         )
         assert response.status_code == 200
         rss_doc_root = ET.fromstring(response.content)
