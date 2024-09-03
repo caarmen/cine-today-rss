@@ -1,6 +1,7 @@
 """
 Implementation of the movieshowtimes endpoint
 """
+
 import xml.etree.ElementTree as ET
 from dataclasses import dataclass
 from datetime import datetime, date, timedelta

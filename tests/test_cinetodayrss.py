@@ -1,6 +1,7 @@
 """
 Unit tests for cine today rss
 """
+
 import xml.etree.ElementTree as ET
 from contextlib import contextmanager
 from datetime import datetime

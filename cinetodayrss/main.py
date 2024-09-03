@@ -1,6 +1,7 @@
 """
 Entry point to the cinetoday rss server
 """
+
 import os
 from fastapi import FastAPI
 import uvicorn

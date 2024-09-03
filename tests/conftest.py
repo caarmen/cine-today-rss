@@ -1,6 +1,7 @@
 """
 Test fixtures
 """
+
 from typing import Dict, Any, List
 
 import pytest
