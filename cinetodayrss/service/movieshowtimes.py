@@ -4,13 +4,12 @@ Implementation of the movieshowtimes endpoint
 
 import xml.etree.ElementTree as ET
 from dataclasses import dataclass
-from datetime import datetime, date, timedelta
+from datetime import datetime, date, timedelta, timezone
 from email.utils import formatdate
 from threading import Timer
 from typing import Any, Dict, List, Set
 
 import gql
-import pytz
 from gql.client import Client
 from gql.transport.aiohttp import AIOHTTPTransport
 
@@ -147,13 +146,13 @@ async def get_movies_rss(theater_ids: List[Movie], feed_url: str) -> str:
 def _get_date(movie_id: int) -> str:
     movie_date = _cache.get(movie_id)
     if not movie_date:
-        movie_date = datetime.now(tz=pytz.UTC)
+        movie_date = datetime.now(tz=timezone.utc)
         _cache[movie_id] = movie_date
     return formatdate(movie_date.timestamp())
 
 
 def _purge_cache():
-    date_limit = datetime.now(tz=pytz.UTC) - timedelta(days=90)
+    date_limit = datetime.now(tz=timezone.utc) - timedelta(days=90)
     old_movie_ids = [
         movie_id for (movie_id, date) in _cache.items() if date < date_limit
     ]

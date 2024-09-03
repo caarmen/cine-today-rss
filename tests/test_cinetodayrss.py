@@ -4,12 +4,11 @@ Unit tests for cine today rss
 
 import xml.etree.ElementTree as ET
 from contextlib import contextmanager
-from datetime import datetime
+from datetime import datetime, timezone
 from email.utils import parsedate_to_datetime
 from typing import Dict, Any, List
 from unittest.mock import patch, AsyncMock
 
-import pytz
 from fastapi.testclient import TestClient
 
 from cinetodayrss.main import app
@@ -86,7 +85,7 @@ def test_date_cache(graphql_response_factory):
     """
     # We can access this just for tests
     # pylint: disable=protected-access
-    movieshowtimes._cache[111] = datetime(1995, 12, 31, 22, 10, 00, tzinfo=pytz.utc)
+    movieshowtimes._cache[111] = datetime(1995, 12, 31, 22, 10, 00, tzinfo=timezone.utc)
     with _mock_client(
         payloads=[
             graphql_response_factory([Movie(id="111", title="Une comédie")]),
