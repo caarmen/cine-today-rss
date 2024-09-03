@@ -2,7 +2,7 @@
 Settings module
 """
 
-from pydantic import BaseSettings
+from pydantic_settings import BaseSettings
 
 
 # pylint: disable=too-few-public-methods
