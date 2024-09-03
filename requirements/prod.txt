@@ -1,6 +1,6 @@
-aiohttp==3.8.1
-fastapi==0.79.0
-gql==3.4.0
-pydantic==1.9.1
-pytz==2022.2.1
-uvicorn[standard]==0.18.2
+aiohttp==3.10.5
+fastapi==0.112.2
+gql==3.5.0
+pydantic==1.10.18
+pytz==2024.1
+uvicorn[standard]==0.30.6
