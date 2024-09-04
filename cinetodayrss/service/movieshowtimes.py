@@ -4,19 +4,17 @@ Implementation of the movieshowtimes endpoint
 
 import xml.etree.ElementTree as ET
 from dataclasses import dataclass
-from datetime import datetime, date, timedelta, timezone
+from datetime import datetime, date
 from email.utils import formatdate
-from threading import Timer
 from typing import Any, Dict, List, Set
 
 import gql
 from gql.client import Client
 from gql.transport.aiohttp import AIOHTTPTransport
 
+from cinetodayrss.service.cache import MovieCache
 from cinetodayrss.settings import settings
 
-_cache = {}
-CACHE_CLEAR_INTERVAL_S = 24 * 60 * 60
 ALLOCINE_GRAPHQL_URL = "https://graph.allocine.fr/v1/public"
 ALLOCINE_FILM_URL_TEMPLATE = "https://www.allocine.fr/film/fichefilm_gen_cfilm={}.html"
 
@@ -63,7 +61,11 @@ query MovieWithShowtimesList($theaterId: String!, $from: DateTime!, $to: DateTim
 )
 
 
-def _to_rss(movies: List[Movie], feed_url: str) -> str:
+def _to_rss(
+    movies: List[Movie],
+    feed_url: str,
+    movie_cache: MovieCache,
+) -> str:
     rss = ET.Element("rss")
     rss.set("version", "2.0")
     rss.set("xmlns:atom", "http://www.w3.org/2005/Atom")
@@ -72,23 +74,21 @@ def _to_rss(movies: List[Movie], feed_url: str) -> str:
     atom_link.set("href", feed_url)
     atom_link.set("rel", "self")
     atom_link.set("type", "application/rss+xml")
-    channel_title = ET.SubElement(channel, "title")
-    channel_title.text = "Films dans vos cinémas aujourd'hui"
-    channel_link = ET.SubElement(channel, "link")
-    channel_link.text = "https://www.allocine.fr/"
-    description = ET.SubElement(channel, "description")
+    ET.SubElement(channel, "title").text = "Films dans vos cinémas aujourd'hui"
+    ET.SubElement(channel, "link").text = "https://www.allocine.fr/"
     today_date_str = date.today().isoformat()
-    description.text = f"Films dans vos cinémas aujourd'hui {today_date_str}"
+    ET.SubElement(channel, "description").text = (
+        f"Films dans vos cinémas aujourd'hui {today_date_str}"
+    )
     for movie in movies:
         item = ET.SubElement(channel, "item")
-        item_title = ET.SubElement(item, "title")
-        item_title.text = movie.title
-        item_link = ET.SubElement(item, "link")
-        item_link.text = movie.url
-        item_guid = ET.SubElement(item, "guid")
-        item_guid.text = movie.url
-        item_pub_date = ET.SubElement(item, "pubDate")
-        item_pub_date.text = _get_date(movie.id)
+        ET.SubElement(item, "title").text = movie.title
+        ET.SubElement(item, "link").text = movie.url
+        ET.SubElement(item, "guid").text = movie.url
+        ET.SubElement(item, "pubDate").text = _get_date(
+            movie.id,
+            movie_cache,
+        )
     ET.indent(rss, space="    ")
     return ET.tostring(rss, xml_declaration=True, encoding="utf-8")
 
@@ -128,7 +128,11 @@ async def _get_movies_for_theater(theater_id: str) -> List[Movie]:
         return _response_to_movies(response)
 
 
-async def get_movies_rss(theater_ids: List[Movie], feed_url: str) -> str:
+async def get_movies_rss(
+    theater_ids: List[Movie],
+    feed_url: str,
+    movie_cache: MovieCache,
+) -> str:
     """
     Get the rss feed for the movies
     """
@@ -139,32 +143,17 @@ async def get_movies_rss(theater_ids: List[Movie], feed_url: str) -> str:
 
     sorted_movies = sorted(movies, key=lambda movie: movie.title)
 
-    rss = _to_rss(sorted_movies, feed_url=feed_url)
+    rss = _to_rss(
+        sorted_movies,
+        feed_url=feed_url,
+        movie_cache=movie_cache,
+    )
     return rss
 
 
-def _get_date(movie_id: int) -> str:
-    movie_date = _cache.get(movie_id)
-    if not movie_date:
-        movie_date = datetime.now(tz=timezone.utc)
-        _cache[movie_id] = movie_date
+def _get_date(
+    movie_id: int,
+    movie_cache: MovieCache,
+) -> str:
+    movie_date = movie_cache.get_date(movie_id)
     return formatdate(movie_date.timestamp())
-
-
-def _purge_cache():
-    date_limit = datetime.now(tz=timezone.utc) - timedelta(days=90)
-    old_movie_ids = [
-        movie_id for (movie_id, date) in _cache.items() if date < date_limit
-    ]
-    for old_movie_id in old_movie_ids:
-        _cache.pop(old_movie_id, None)
-
-
-def schedule_purge_cache():
-    """
-    Periodically delete old movies from the cache
-    """
-    _purge_cache()
-    timer = Timer(CACHE_CLEAR_INTERVAL_S, schedule_purge_cache)
-    timer.daemon = True
-    timer.start()

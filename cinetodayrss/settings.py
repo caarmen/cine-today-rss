@@ -2,6 +2,7 @@
 Settings module
 """
 
+from pathlib import Path
 from pydantic_settings import BaseSettings
 
 
@@ -12,6 +13,7 @@ class Settings(BaseSettings):
     """
 
     authorization: str = ""
+    cache_dir: Path = Path("/tmp/cine-today-rss-cache/")
 
 
 settings = Settings(_env_file="prod.env")

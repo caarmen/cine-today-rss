@@ -10,6 +10,7 @@ from typing import Dict, Any, List
 from unittest.mock import patch, AsyncMock
 
 from fastapi.testclient import TestClient
+from freezegun import freeze_time
 
 from cinetodayrss.main import app
 from cinetodayrss.service import movieshowtimes
@@ -18,13 +19,6 @@ from cinetodayrss.settings import settings
 
 settings.authorization = "some authorization"
 client = TestClient(app)
-
-
-def teardown_function():
-    """
-    Clean up state after each test
-    """
-    movieshowtimes.schedule_purge_cache()
 
 
 @contextmanager
@@ -83,10 +77,8 @@ def test_date_cache(graphql_response_factory):
     """
     Verify that we use the dates from the cache
     """
-    # We can access this just for tests
-    # pylint: disable=protected-access
-    movieshowtimes._cache[111] = datetime(1995, 12, 31, 22, 10, 00, tzinfo=timezone.utc)
-    with _mock_client(
+    now = datetime.now(tz=timezone.utc)
+    with freeze_time("1995-12-31 22:10:00") as frozen_date, _mock_client(
         payloads=[
             graphql_response_factory([Movie(id="111", title="Une comédie")]),
         ]
@@ -106,21 +98,22 @@ def test_date_cache(graphql_response_factory):
         assert pub_date.minute == 10
         assert pub_date.second == 0
 
-    movieshowtimes.schedule_purge_cache()
-    with _mock_client(
-        payloads=[
-            graphql_response_factory([Movie(id="111", title="Une comédie")]),
-        ]
-    ):
-        response = client.get("/moviesrss?theater_ids=VGhlYXRlcjpDMDE1OQ==")
-        assert response.status_code == 200
-        rss_doc_root = ET.fromstring(response.content)
-        items = rss_doc_root.find("channel").findall("item")
-        assert len(items) == 1
-        item = items.pop(0)
-        pub_date_text = item.find("pubDate").text
-        pub_date = parsedate_to_datetime(pub_date_text)
-        assert pub_date.year != 1995
+        frozen_date.move_to(now)
+
+        with _mock_client(
+            payloads=[
+                graphql_response_factory([Movie(id="111", title="Une comédie")]),
+            ]
+        ):
+            response = client.get("/moviesrss?theater_ids=VGhlYXRlcjpDMDE1OQ==")
+            assert response.status_code == 200
+            rss_doc_root = ET.fromstring(response.content)
+            items = rss_doc_root.find("channel").findall("item")
+            assert len(items) == 1
+            item = items.pop(0)
+            pub_date_text = item.find("pubDate").text
+            pub_date = parsedate_to_datetime(pub_date_text)
+            assert pub_date.year != 1995
 
 
 def test_remove_duplicates(graphql_response_factory):
