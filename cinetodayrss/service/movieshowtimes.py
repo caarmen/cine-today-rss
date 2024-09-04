@@ -120,7 +120,7 @@ async def _get_movies_for_theater(theater_id: str) -> List[Movie]:
                 "Authorization": f"Bearer {settings.authorization}",
             },
         ),
-        fetch_schema_from_transport=True,
+        fetch_schema_from_transport=False,
         serialize_variables=True,
         parse_results=True,
     ) as client:
