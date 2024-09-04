@@ -75,23 +75,18 @@ def _to_rss(
     atom_link.set("href", feed_url)
     atom_link.set("rel", "self")
     atom_link.set("type", "application/rss+xml")
-    channel_title = ET.SubElement(channel, "title")
-    channel_title.text = "Films dans vos cinémas aujourd'hui"
-    channel_link = ET.SubElement(channel, "link")
-    channel_link.text = "https://www.allocine.fr/"
-    description = ET.SubElement(channel, "description")
+    ET.SubElement(channel, "title").text = "Films dans vos cinémas aujourd'hui"
+    ET.SubElement(channel, "link").text = "https://www.allocine.fr/"
     today_date_str = date.today().isoformat()
-    description.text = f"Films dans vos cinémas aujourd'hui {today_date_str}"
+    ET.SubElement(channel, "description").text = (
+        f"Films dans vos cinémas aujourd'hui {today_date_str}"
+    )
     for movie in movies:
         item = ET.SubElement(channel, "item")
-        item_title = ET.SubElement(item, "title")
-        item_title.text = movie.title
-        item_link = ET.SubElement(item, "link")
-        item_link.text = movie.url
-        item_guid = ET.SubElement(item, "guid")
-        item_guid.text = movie.url
-        item_pub_date = ET.SubElement(item, "pubDate")
-        item_pub_date.text = _get_date(
+        ET.SubElement(item, "title").text = movie.title
+        ET.SubElement(item, "link").text = movie.url
+        ET.SubElement(item, "guid").text = movie.url
+        ET.SubElement(item, "pubDate").text = _get_date(
             movie.id,
         )
     ET.indent(rss, space="    ")
