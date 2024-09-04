@@ -4,7 +4,7 @@ Implementation of the movieshowtimes endpoint
 
 import xml.etree.ElementTree as ET
 from dataclasses import dataclass
-from datetime import datetime, date, timedelta, timezone
+from datetime import datetime, date
 from email.utils import formatdate
 from threading import Timer
 from typing import Any, Dict, List, Set
@@ -13,9 +13,10 @@ import gql
 from gql.client import Client
 from gql.transport.aiohttp import AIOHTTPTransport
 
+from cinetodayrss.service.cache import MovieCache
 from cinetodayrss.settings import settings
 
-_cache = {}
+_cache = MovieCache()
 CACHE_CLEAR_INTERVAL_S = 24 * 60 * 60
 ALLOCINE_GRAPHQL_URL = "https://graph.allocine.fr/v1/public"
 ALLOCINE_FILM_URL_TEMPLATE = "https://www.allocine.fr/film/fichefilm_gen_cfilm={}.html"
@@ -152,27 +153,15 @@ async def get_movies_rss(
 def _get_date(
     movie_id: int,
 ) -> str:
-    movie_date = _cache.get(movie_id)
-    if not movie_date:
-        movie_date = datetime.now(tz=timezone.utc)
-        _cache[movie_id] = movie_date
+    movie_date = _cache.get_date(movie_id)
     return formatdate(movie_date.timestamp())
-
-
-def _purge_cache():
-    date_limit = datetime.now(tz=timezone.utc) - timedelta(days=90)
-    old_movie_ids = [
-        movie_id for (movie_id, date) in _cache.items() if date < date_limit
-    ]
-    for old_movie_id in old_movie_ids:
-        _cache.pop(old_movie_id, None)
 
 
 def schedule_purge_cache():
     """
     Periodically delete old movies from the cache
     """
-    _purge_cache()
+    _cache.purge_old_movies()
     timer = Timer(CACHE_CLEAR_INTERVAL_S, schedule_purge_cache)
     timer.daemon = True
     timer.start()
