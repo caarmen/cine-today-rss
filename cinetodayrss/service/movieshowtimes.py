@@ -15,7 +15,7 @@ from gql.transport.aiohttp import AIOHTTPTransport
 from cinetodayrss.service.cache import MovieCache
 from cinetodayrss.settings import settings
 
-_cache = MovieCache()
+_cache = MovieCache(settings.cache_dir)
 ALLOCINE_GRAPHQL_URL = "https://graph.allocine.fr/v1/public"
 ALLOCINE_FILM_URL_TEMPLATE = "https://www.allocine.fr/film/fichefilm_gen_cfilm={}.html"
 
