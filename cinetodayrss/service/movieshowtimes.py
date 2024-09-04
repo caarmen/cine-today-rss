@@ -6,7 +6,6 @@ import xml.etree.ElementTree as ET
 from dataclasses import dataclass
 from datetime import datetime, date
 from email.utils import formatdate
-from threading import Timer
 from typing import Any, Dict, List, Set
 
 import gql
@@ -17,7 +16,6 @@ from cinetodayrss.service.cache import MovieCache
 from cinetodayrss.settings import settings
 
 _cache = MovieCache()
-CACHE_CLEAR_INTERVAL_S = 24 * 60 * 60
 ALLOCINE_GRAPHQL_URL = "https://graph.allocine.fr/v1/public"
 ALLOCINE_FILM_URL_TEMPLATE = "https://www.allocine.fr/film/fichefilm_gen_cfilm={}.html"
 
@@ -155,13 +153,3 @@ def _get_date(
 ) -> str:
     movie_date = _cache.get_date(movie_id)
     return formatdate(movie_date.timestamp())
-
-
-def schedule_purge_cache():
-    """
-    Periodically delete old movies from the cache
-    """
-    _cache.purge_old_movies()
-    timer = Timer(CACHE_CLEAR_INTERVAL_S, schedule_purge_cache)
-    timer.daemon = True
-    timer.start()

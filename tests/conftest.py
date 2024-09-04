@@ -15,9 +15,9 @@ def clear_cache():
     """
     Clear the cache at the beginning and end of each test.
     """
-    movieshowtimes.schedule_purge_cache()
+    movieshowtimes._cache.schedule_purge_cache()
     yield
-    movieshowtimes.schedule_purge_cache()
+    movieshowtimes._cache.schedule_purge_cache()
 
 
 @pytest.fixture(name="graphql_response_factory")

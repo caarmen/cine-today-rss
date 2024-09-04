@@ -99,7 +99,7 @@ def test_date_cache(graphql_response_factory):
         assert pub_date.second == 0
 
         frozen_date.move_to(now)
-        movieshowtimes.schedule_purge_cache()
+        movieshowtimes._cache.schedule_purge_cache()
         with _mock_client(
             payloads=[
                 graphql_response_factory([Movie(id="111", title="Une comédie")]),
