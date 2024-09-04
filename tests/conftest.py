@@ -2,21 +2,22 @@
 Test fixtures
 """
 
+from pathlib import Path
 from typing import Dict, Any, List
 
 import pytest
 
-from cinetodayrss.service.movieshowtimes import Movie, _cache
+from cinetodayrss.dependencies import get_cache_dir
+from cinetodayrss.main import app
+from cinetodayrss.service.movieshowtimes import Movie
 
 
 @pytest.fixture(autouse=True)
-def clear_cache():
+def override_cache_dir(tmp_path: Path):
     """
-    Clear the cache at the beginning and end of each test.
+    Override the cache location for tests.
     """
-    _cache.clear()
-    yield
-    _cache.clear()
+    app.dependency_overrides[get_cache_dir] = lambda: str(tmp_path)
 
 
 @pytest.fixture(name="graphql_response_factory")

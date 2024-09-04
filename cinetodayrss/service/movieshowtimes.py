@@ -15,7 +15,6 @@ from gql.transport.aiohttp import AIOHTTPTransport
 from cinetodayrss.service.cache import MovieCache
 from cinetodayrss.settings import settings
 
-_cache = MovieCache(settings.cache_dir)
 ALLOCINE_GRAPHQL_URL = "https://graph.allocine.fr/v1/public"
 ALLOCINE_FILM_URL_TEMPLATE = "https://www.allocine.fr/film/fichefilm_gen_cfilm={}.html"
 
@@ -65,6 +64,7 @@ query MovieWithShowtimesList($theaterId: String!, $from: DateTime!, $to: DateTim
 def _to_rss(
     movies: List[Movie],
     feed_url: str,
+    movie_cache: MovieCache,
 ) -> str:
     rss = ET.Element("rss")
     rss.set("version", "2.0")
@@ -87,6 +87,7 @@ def _to_rss(
         ET.SubElement(item, "guid").text = movie.url
         ET.SubElement(item, "pubDate").text = _get_date(
             movie.id,
+            movie_cache,
         )
     ET.indent(rss, space="    ")
     return ET.tostring(rss, xml_declaration=True, encoding="utf-8")
@@ -130,6 +131,7 @@ async def _get_movies_for_theater(theater_id: str) -> List[Movie]:
 async def get_movies_rss(
     theater_ids: List[Movie],
     feed_url: str,
+    movie_cache: MovieCache,
 ) -> str:
     """
     Get the rss feed for the movies
@@ -144,12 +146,14 @@ async def get_movies_rss(
     rss = _to_rss(
         sorted_movies,
         feed_url=feed_url,
+        movie_cache=movie_cache,
     )
     return rss
 
 
 def _get_date(
     movie_id: int,
+    movie_cache: MovieCache,
 ) -> str:
-    movie_date = _cache.get_date(movie_id)
+    movie_date = movie_cache.get_date(movie_id)
     return formatdate(movie_date.timestamp())
