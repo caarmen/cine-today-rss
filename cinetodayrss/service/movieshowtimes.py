@@ -63,7 +63,10 @@ query MovieWithShowtimesList($theaterId: String!, $from: DateTime!, $to: DateTim
 )
 
 
-def _to_rss(movies: List[Movie], feed_url: str) -> str:
+def _to_rss(
+    movies: List[Movie],
+    feed_url: str,
+) -> str:
     rss = ET.Element("rss")
     rss.set("version", "2.0")
     rss.set("xmlns:atom", "http://www.w3.org/2005/Atom")
@@ -88,7 +91,9 @@ def _to_rss(movies: List[Movie], feed_url: str) -> str:
         item_guid = ET.SubElement(item, "guid")
         item_guid.text = movie.url
         item_pub_date = ET.SubElement(item, "pubDate")
-        item_pub_date.text = _get_date(movie.id)
+        item_pub_date.text = _get_date(
+            movie.id,
+        )
     ET.indent(rss, space="    ")
     return ET.tostring(rss, xml_declaration=True, encoding="utf-8")
 
@@ -128,7 +133,10 @@ async def _get_movies_for_theater(theater_id: str) -> List[Movie]:
         return _response_to_movies(response)
 
 
-async def get_movies_rss(theater_ids: List[Movie], feed_url: str) -> str:
+async def get_movies_rss(
+    theater_ids: List[Movie],
+    feed_url: str,
+) -> str:
     """
     Get the rss feed for the movies
     """
@@ -139,11 +147,16 @@ async def get_movies_rss(theater_ids: List[Movie], feed_url: str) -> str:
 
     sorted_movies = sorted(movies, key=lambda movie: movie.title)
 
-    rss = _to_rss(sorted_movies, feed_url=feed_url)
+    rss = _to_rss(
+        sorted_movies,
+        feed_url=feed_url,
+    )
     return rss
 
 
-def _get_date(movie_id: int) -> str:
+def _get_date(
+    movie_id: int,
+) -> str:
     movie_date = _cache.get(movie_id)
     if not movie_date:
         movie_date = datetime.now(tz=timezone.utc)

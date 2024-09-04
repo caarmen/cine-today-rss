@@ -24,7 +24,10 @@ async def movies_rss(
     request: Request,
     theater_ids: List[str] = Query(default=[]),
 ):
-    content = await get_movies_rss(theater_ids, feed_url=str(request.url))
+    content = await get_movies_rss(
+        theater_ids,
+        feed_url=str(request.url),
+    )
     return Response(
         content=content,
         media_type="application/rss+xml; charset=utf-8",
