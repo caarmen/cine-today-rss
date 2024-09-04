@@ -6,7 +6,18 @@ from typing import Dict, Any, List
 
 import pytest
 
+from cinetodayrss.service import movieshowtimes
 from cinetodayrss.service.movieshowtimes import Movie
+
+
+@pytest.fixture(autouse=True)
+def clear_cache():
+    """
+    Clear the cache at the beginning and end of each test.
+    """
+    movieshowtimes.schedule_purge_cache()
+    yield
+    movieshowtimes.schedule_purge_cache()
 
 
 @pytest.fixture(name="graphql_response_factory")

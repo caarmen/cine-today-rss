@@ -21,13 +21,6 @@ settings.authorization = "some authorization"
 client = TestClient(app)
 
 
-def teardown_function():
-    """
-    Clean up state after each test
-    """
-    movieshowtimes.schedule_purge_cache()
-
-
 @contextmanager
 def _mock_client(payloads: List[Dict[str, Any]]):
     with patch("cinetodayrss.service.movieshowtimes.Client") as mock_client:
