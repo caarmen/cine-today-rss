@@ -13,9 +13,7 @@ import httpx
 from cinetodayrss.main import app
 from cinetodayrss.service import movieshowtimes
 from cinetodayrss.service.movieshowtimes import ALLOCINE_API_URL, Movie
-from cinetodayrss.settings import settings
 
-settings.authorization = "some authorization"
 client = TestClient(app)
 
 

@@ -12,7 +12,6 @@ class Settings(BaseSettings):
     Settings for the app
     """
 
-    authorization: str = ""
     cache_dir: Path = Path("/tmp/cine-today-rss-cache/")
 
 
