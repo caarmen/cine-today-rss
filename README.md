@@ -36,6 +36,6 @@ docker run --env TZ=Europe/Paris --env cache_dir="..." --detach --publish 8000:8
 
 Query the endpoint for some theater ids:
     ```
-    curl "http://localhost:8000/moviesrss?theater_ids=VGhlYXRlcjpDMDE1OQ==&theater_ids=VGhlYXRlcjpQNTc1Ng=="
+    curl "http://localhost:8000/moviesrss?theater_ids=B0114&theater_ids=C0159"
     ```
 

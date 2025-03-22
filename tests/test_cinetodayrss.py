@@ -34,9 +34,7 @@ def test_rss_feed(respx_mock, cinetoday_response_factory):
             ),
         ),
     ]
-    response = client.get(
-        "/moviesrss?theater_ids=VGhlYXRlcjpDMDE1OQ==&theater_ids=VGhlYXRlcjpQNTc1Ng=="
-    )
+    response = client.get("/moviesrss?theater_ids=C0159&theater_ids=B0114")
     assert response.status_code == 200
     rss_doc_root = ET.fromstring(response.content)
     assert rss_doc_root.tag == "rss"
@@ -77,7 +75,7 @@ def test_date_cache(respx_mock, cinetoday_response_factory):
                 json=cinetoday_response_factory([Movie(id="111", title="Une comédie")]),
             ),
         )
-        response = client.get("/moviesrss?theater_ids=VGhlYXRlcjpDMDE1OQ==")
+        response = client.get("/moviesrss?theater_ids=C0159")
         assert response.status_code == 200
         rss_doc_root = ET.fromstring(response.content)
         items = rss_doc_root.find("channel").findall("item")
@@ -94,7 +92,7 @@ def test_date_cache(respx_mock, cinetoday_response_factory):
 
         frozen_date.move_to(now)
 
-        response = client.get("/moviesrss?theater_ids=VGhlYXRlcjpDMDE1OQ==")
+        response = client.get("/moviesrss?theater_ids=C0159")
         assert response.status_code == 200
         rss_doc_root = ET.fromstring(response.content)
         items = rss_doc_root.find("channel").findall("item")
@@ -132,9 +130,7 @@ def test_remove_duplicates(respx_mock, cinetoday_response_factory):
             ),
         ),
     ]
-    response = client.get(
-        "/moviesrss?theater_ids=VGhlYXRlcjpDMDE1OQ==&theater_ids=VGhlYXRlcjpQNTc1Ng=="
-    )
+    response = client.get("/moviesrss?theater_ids=C0159&theater_ids=B0114")
     assert response.status_code == 200
     rss_doc_root = ET.fromstring(response.content)
     assert rss_doc_root.tag == "rss"
