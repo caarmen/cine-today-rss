@@ -4,18 +4,15 @@ Implementation of the movieshowtimes endpoint
 
 import xml.etree.ElementTree as ET
 from dataclasses import dataclass
-from datetime import datetime, date
+from datetime import date
 from email.utils import formatdate
 from typing import Any, Dict, List, Set
 
-import gql
-from gql.client import Client
-from gql.transport.aiohttp import AIOHTTPTransport
+import httpx
 
 from cinetodayrss.service.cache import MovieCache
-from cinetodayrss.settings import settings
 
-ALLOCINE_GRAPHQL_URL = "https://graph.allocine.fr/v1/public"
+ALLOCINE_API_URL = "https://www.allocine.fr/_/showtimes"
 ALLOCINE_FILM_URL_TEMPLATE = "https://www.allocine.fr/film/fichefilm_gen_cfilm={}.html"
 
 
@@ -35,30 +32,6 @@ class Movie:
         The url of the movie
         """
         return ALLOCINE_FILM_URL_TEMPLATE.format(self.id)
-
-
-_query = gql.gql(
-    """
-query MovieWithShowtimesList($theaterId: String!, $from: DateTime!, $to: DateTime!) {
-    movieShowtimeList(
-        theater: $theaterId
-        from: $from
-        to: $to
-        first: 50
-        order: [REVERSE_RELEASE_DATE, WEEKLY_POPULARITY]
-    )  {
-        edges  {
-            node {
-                movie {
-                    title
-                    internalId
-                }
-            }
-        }
-    }
-}
-"""
-)
 
 
 def _to_rss(
@@ -93,39 +66,21 @@ def _to_rss(
     return ET.tostring(rss, xml_declaration=True, encoding="utf-8")
 
 
-def _edge_to_movie(edge: Dict[str, Any]) -> Movie:
-    movie = edge["node"]["movie"]
-    return Movie(id=movie["internalId"], title=movie["title"])
-
-
 def _response_to_movies(response: Dict[str, Any]) -> List[Movie]:
-    edges = response["movieShowtimeList"]["edges"]
-    return [_edge_to_movie(edge) for edge in edges]
+    results = response["results"]
+    return [
+        Movie(id=item["movie"]["internalId"], title=item["movie"]["title"])
+        for item in results
+    ]
 
 
 async def _get_movies_for_theater(theater_id: str) -> List[Movie]:
-    datetime_from = (
-        datetime.now().replace(hour=0, minute=0, second=0, microsecond=0).isoformat()
-    )
-    datetime_to = datetime.now().replace(hour=23, minute=59, second=59).isoformat()
-    params = {
-        "theaterId": theater_id,
-        "from": datetime_from,
-        "to": datetime_to,
-    }
-    async with Client(
-        transport=AIOHTTPTransport(
-            url=ALLOCINE_GRAPHQL_URL,
-            headers={
-                "Authorization": f"Bearer {settings.authorization}",
-            },
-        ),
-        fetch_schema_from_transport=False,
-        serialize_variables=True,
-        parse_results=True,
-    ) as client:
-        response = await client.execute(_query, variable_values=params)
-        return _response_to_movies(response)
+    date_now = date.today()
+    date_now_fmt = date.strftime(date_now, "%Y-%m-%d")
+    url = f"{ALLOCINE_API_URL}/theater-{theater_id}/d-{date_now_fmt}/"
+    async with httpx.AsyncClient() as client:
+        response = await client.get(url=url)
+    return _response_to_movies(response.json())
 
 
 async def get_movies_rss(
