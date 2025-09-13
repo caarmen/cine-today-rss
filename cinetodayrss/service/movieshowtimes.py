@@ -3,6 +3,7 @@ Implementation of the movieshowtimes endpoint
 """
 
 import xml.etree.ElementTree as ET
+import logging
 from dataclasses import dataclass
 from datetime import date
 from email.utils import formatdate
@@ -11,6 +12,8 @@ from typing import Any, Dict, List, Set
 import httpx
 
 from cinetodayrss.service.cache import MovieCache
+
+logger = logging.getLogger(__name__)
 
 ALLOCINE_API_URL = "https://www.allocine.fr/_/showtimes"
 ALLOCINE_FILM_URL_TEMPLATE = "https://www.allocine.fr/film/fichefilm_gen_cfilm={}.html"
@@ -80,6 +83,9 @@ async def _get_movies_for_theater(theater_id: str) -> List[Movie]:
     url = f"{ALLOCINE_API_URL}/theater-{theater_id}/d-{date_now_fmt}/"
     async with httpx.AsyncClient() as client:
         response = await client.get(url=url)
+    if not response.is_success:
+        logger.error(f"Error fetching {url}: response text {response.text}")
+        return []
     return _response_to_movies(response.json())
 
 
