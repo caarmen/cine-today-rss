@@ -6,6 +6,13 @@ import os
 from fastapi import FastAPI
 import uvicorn
 from cinetodayrss.routers import movieshowtimes
+import logging
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(levelname)-9s %(name)-35s | %(message)s",
+    datefmt="%Y-%m-%d %H:%M:%S",
+)
 
 app = FastAPI(
     openapi_url=None,
